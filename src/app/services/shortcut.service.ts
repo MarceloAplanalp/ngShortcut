@@ -1,7 +1,7 @@
 import { Injectable, Inject, NgZone } from '@angular/core';
 import { DOCUMENT } from '@angular/platform-browser';
 import { WindowService } from './window.service';
-import union = require('lodash/union');
+import * as _ from 'lodash';
 
 import { keyEvent } from '../types/key-event';
 import { KeyInfo } from '../interfaces/key-info';
@@ -122,7 +122,9 @@ export class ShortcutService {
         return modifiers;
     }
 
-    constructor(@Inject(WindowService) window: Window, @Inject(DOCUMENT) _document: HTMLDocument, ngZone: NgZone) {
+    constructor(@Inject(WindowService) window: Window,
+                @Inject(DOCUMENT) _document: HTMLDocument,
+                private ngZone: NgZone) {
         this.aliasesMap = new Map<string, string>([
             ['option', 'alt'],
             ['command', 'meta'],
@@ -153,6 +155,7 @@ export class ShortcutService {
             }
         });
 
+        // needs to be called outside angular since it's a vanilla method and it doesn't respect the angular lifecycle
         ngZone.runOutsideAngular(() => {
             _document.addEventListener(KEYUP, (event) => this.handleKeyEvent(event as KeyboardEvent));
             _document.addEventListener(KEYPRESS, (event) => this.handleKeyEvent(event as KeyboardEvent));
@@ -196,10 +199,6 @@ export class ShortcutService {
         }
     }
 
-    public unbindAll() {
-        this.callbacks = new Map();
-    }
-
     private getKeyInfo(combination: string, action?: keyEvent): KeyInfo {
 
         const keys = ShortcutService.keysFromString(combination);
@@ -219,12 +218,12 @@ export class ShortcutService {
             // if this is not a keypress event then we should be smart about using shift-keys
             if (action && action === KEYPRESS && this.shiftMap.has(lastKey)) {
                 lastKey = this.shiftMap.get(lastKey);
-                modifiers = union(modifiers, ['shift']);
+                modifiers = _.union(modifiers, ['shift']);
             }
 
             // if the key is a modifier, then add it to the array
             if (ShortcutService.isModifier(lastKey)) {
-                modifiers = union(modifiers, [lastKey]);
+                modifiers = _.union(modifiers, [lastKey]);
             }
         });
 
@@ -281,7 +280,8 @@ export class ShortcutService {
                 return action === c.action && ShortcutService.modifiersMatch(modifiers, c.modifiers);
             });
             if (entry) {
-                entry.callback();
+                // call entry.callback and get it in sync with angular
+                this.ngZone.run(entry.callback);
             }
         }
     }

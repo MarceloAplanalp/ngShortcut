@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 
 import { AppComponent } from './app.component';
 import { ShortcutService } from './services/shortcut.service';
+import { WindowService } from './services/window.service';
 
 @NgModule({
   declarations: [
@@ -12,6 +13,7 @@ import { ShortcutService } from './services/shortcut.service';
     BrowserModule
   ],
   providers: [
+      { provide: WindowService, useValue: window },
       ShortcutService
   ],
   bootstrap: [AppComponent]

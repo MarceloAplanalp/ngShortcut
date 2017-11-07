@@ -1,0 +1,11 @@
+li {
+    display: block;
+    width: 20px;
+    height: 20px;
+    border: solid 1px black;
+    float: left;
+
+    &.active {
+        background: red;
+    }
+}
