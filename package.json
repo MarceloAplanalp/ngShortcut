@@ -8,7 +8,8 @@
     "build": "ng build",
     "test": "ng test",
     "lint": "ng lint",
-    "e2e": "ng e2e"
+    "e2e": "ng e2e",
+    "build-auto": "ng lint && ng test --single-run && ng build"
   },
   "private": true,
   "dependencies": {
