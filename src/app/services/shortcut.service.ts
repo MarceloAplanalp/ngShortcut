@@ -144,7 +144,6 @@ export class ShortcutService {
         // of a keydown event.
         for (let i = 0; i < 10; i++) {
             this.specialKeysMap.set(i.toString(), i.toString());
-            this.specialKeysMap.set(`Numpad${i}`, i.toString());
         }
 
         this.specialKeysMap.forEach((value, key) => {
@@ -215,9 +214,9 @@ export class ShortcutService {
                 lastKey = this.aliasesMap.get(lastKey);
             }
 
-            // if this is not a keypress event then we should be smart about using shift-keys
-            if (action && action === KEYPRESS && this.shiftMap.has(lastKey)) {
-                lastKey = this.shiftMap.get(lastKey);
+            if (this.shiftMap.has(lastKey)) {
+                // note: since $event::key actually contains the real printable character, we don't need to use the
+                // non-shift key anymore but we still need to put the shift key into the modifiers.
                 modifiers = _.union(modifiers, ['shift']);
             }
 
