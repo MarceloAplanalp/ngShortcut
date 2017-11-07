@@ -16,7 +16,7 @@ export class AppComponent implements OnInit {
         this.service.bind('1', () => {
             this.active = 1;
         });
-        this.service.bind('@', () => {
+        this.service.bind('shift+2', () => {
             this.active = 2;
         });
         this.service.bind('3', () => {

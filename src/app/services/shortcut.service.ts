@@ -5,7 +5,7 @@ import * as _ from 'lodash';
 
 import { keyEvent } from '../types/key-event';
 import { KeyInfo } from '../interfaces/key-info';
-import { KEYUP, KEYPRESS, KEYDOWN } from '../constants';
+import { KEYUP, KEYPRESS, KEYDOWN, SHIFT } from '../constants';
 import { BindingInfo } from '../interfaces/binding-info';
 
 @Injectable()
@@ -80,6 +80,9 @@ export class ShortcutService {
         ['|', '\\']
     ]);
 
+    // since we aren't working with KeyCodes anymore, we need to transform the keys when shift is part of the string
+    private unshiftMap: Map<string, string> = new Map();
+
     private aliasesMap: Map<string, string>;
     private reverseMapping: Map<string, string> = new Map();
 
@@ -97,7 +100,7 @@ export class ShortcutService {
     }
 
     private static isModifier(key: string): boolean {
-        return key === 'shift' || key === 'ctrl' || key === 'alt' || key === 'meta';
+        return key === SHIFT || key === 'ctrl' || key === 'alt' || key === 'meta';
     }
 
     private static modifiersMatch(m1: string[], m2: string[]): boolean {
@@ -107,7 +110,7 @@ export class ShortcutService {
     private static getEventModifiers(e: KeyboardEvent) {
         const modifiers = [];
         if (e.shiftKey) {
-            modifiers.push('shift');
+            modifiers.push(SHIFT);
         }
         if (e.altKey) {
             modifiers.push('alt');
@@ -152,6 +155,10 @@ export class ShortcutService {
             if (isNaN(parseInt(value, 10))) {
                 this.reverseMapping.set(value, key);
             }
+        });
+
+        this.shiftMap.forEach((value, key) => {
+            this.unshiftMap.set(value, key);
         });
 
         // needs to be called outside angular since it's a vanilla method and it doesn't respect the angular lifecycle
@@ -202,6 +209,9 @@ export class ShortcutService {
 
         const keys = ShortcutService.keysFromString(combination);
 
+        // needs to figure out if shift is on the sequence
+        const isShiftInSequence = keys.includes(SHIFT);
+
         // the last key is that actually triggers the event
         let lastKey: string;
         let modifiers: string[] = [];
@@ -217,7 +227,7 @@ export class ShortcutService {
             if (this.shiftMap.has(lastKey)) {
                 // note: since $event::key actually contains the real printable character, we don't need to use the
                 // non-shift key anymore but we still need to put the shift key into the modifiers.
-                modifiers = _.union(modifiers, ['shift']);
+                modifiers = _.union(modifiers, [SHIFT]);
             }
 
             // if the key is a modifier, then add it to the array
@@ -225,6 +235,12 @@ export class ShortcutService {
                 modifiers = _.union(modifiers, [lastKey]);
             }
         });
+
+        // ie.: 'shift+2' binded, real key value will be an at with shift key pressed so, we need to change that
+        // 2 to an "@"
+        if (isShiftInSequence && this.unshiftMap.has(lastKey)) {
+            lastKey = this.unshiftMap.get(lastKey);
+        }
 
         return {
             key: lastKey,
