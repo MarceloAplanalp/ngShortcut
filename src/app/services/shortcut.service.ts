@@ -171,23 +171,12 @@ export class ShortcutService {
 
     // binds a keyboard event,
     // can be a single key or a combination of keys separated with '+'
-    public bind(combination: string, callback: () => void, action?: keyEvent): void {
-
-        // remove the spaces to sanitize the combination
-        combination = combination.replace(/\s+/g, '');
-        const info = this.getKeyInfo(combination, action);
-
-        // make sure to initialize the array if it's the first time.
-        // a callback'll be added for this key
-        if (!this.callbacks.has(info.key)) {
-            this.callbacks.set(info.key, []);
+    public bind(combination: string | string[], callback: () => void, action?: keyEvent): void {
+        if (Array.isArray(combination)) {
+            combination.forEach((c) => this._bind(c, callback, action));
+        } else {
+            this._bind(combination as string, callback, action);
         }
-
-        this.callbacks.get(info.key).push({
-            callback,
-            modifiers: info.modifiers,
-            action: info.action
-        });
     }
 
     public unbind(combination: string, action?: keyEvent) {
@@ -203,6 +192,24 @@ export class ShortcutService {
                 callbacksArray.splice(index, 1);
             }
         }
+    }
+
+    private _bind(combination: string, callback: () => void, action?: keyEvent): void {
+        // remove the spaces to sanitize the combination
+        combination = combination.replace(/\s+/g, '');
+        const info = this.getKeyInfo(combination, action);
+
+        // make sure to initialize the array if it's the first time.
+        // a callback'll be added for this key
+        if (!this.callbacks.has(info.key)) {
+            this.callbacks.set(info.key, []);
+        }
+
+        this.callbacks.get(info.key).push({
+            callback,
+            modifiers: info.modifiers,
+            action: info.action
+        });
     }
 
     private getKeyInfo(combination: string, action?: keyEvent): KeyInfo {
